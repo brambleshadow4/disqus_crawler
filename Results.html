@@ -1,0 +1,159 @@
+<head>
+	<meta charset="UTF-8" />
+	<title>Results</title>
+	<style type="text/css" rel="spreadsheet">
+		
+		h1{  margin-bottom: 0px;  }
+		h2{  margin-top: 0px;  }
+
+
+		img{
+			height: 45px;
+			width: 45px;
+		}
+		.vc{
+			vertical-align: center;
+		}
+
+		caption{
+			font-size: 20pt;
+		}
+		#overall{
+			font-weight: bold;
+			font-size: 20pt;
+			margin-bottom: 20px;
+		}
+		#overall span{font-size: 15pt;}
+
+		body{
+			background-color: gray;
+			color: black;
+			text-align: center;
+		}
+
+		.tableContainer{
+			margin: auto;
+			padding: 10px;
+			border: solid black;
+			border-radius: 10px;
+			background-color: DimGray;
+			display: inline-block;
+		}
+		table{			
+			border-collapse: collapse;
+		}
+
+
+		td,th{
+			text-align: center;
+		}
+		th {padding: 10px;}
+		th a{color: black;}
+
+
+
+		
+		/*tr:nth-child(odd) {
+   			background-color: LightGray;
+		}*/
+
+		#actionLinks{
+			padding: 10px;
+		}
+
+		#postData{display: none;}
+		#userData{display: none;}
+
+		#comments tr{
+			/*height: 100px;*/
+			/*background-color: blue;*/
+		}
+		#comments td, tr.comments td{
+			padding: 10px;
+		}
+
+		span[ax]{
+			cursor: pointer;
+			text-decoration: underline;
+		}
+
+		.selected{
+			border: double red;
+		}
+		
+		tr:nth-child(even) {
+   			background-color: gray;
+		}
+
+		tr.odd {background-color: gray;}
+		tr.even {background-color: DimGray;}
+
+		/*tr.box {background-color: #8ea59b}*/
+		tr.box span::before {content:"<----------";}
+		tr.box span::after {content:"---------->";}
+
+		tr.odd.inner1 {background-color: #989f80;} tr.even.inner1 {background-color: #7b8363;}
+
+		tr.odd.inner2{background-color: #9d8080} tr.even.inner2{background-color: #826464}
+
+		tr.odd.inner3{background-color: #9480ac} tr.even.inner3{background-color: #7d659a}
+
+		tr.odd.inner4{background-color: #809ba1} tr.even.inner4{background-color: #6c8c93}
+
+		tr.odd.inner5{background-color: #9d8462} tr.even.inner5{background-color: #7d6a4f}
+
+	</style>
+
+</head>
+<body>
+
+	<h1>About Your Discussion:</h1>
+	<h2><a href='§threadURL§' id='threadURL'>§threadName§</a></h2>
+
+	<div id='overall'>
+		<div>§comments§ comments!</div>
+		<div>§users§ people!</div>
+		<span ax id='analyzeNetwork'>See visualization</span>
+	</div>
+	
+	<div><div class="tableContainer"><table id="users">
+		<caption>Who's here</caption><tbody>
+		<tr>
+			<th colspan="2"><span ax='sort' id="sortUser" href="Results.html">User:</span></th>
+			<th><span ax='sort' id="sortComments" href="Results.html">Comments:</span></th>
+			<th>Profile:</th>
+			<th><span ax='sort' id="sortDate" href="Results.html">Last Active:</span></th>
+			<th>Show Posts:</th>
+		</tr>
+	</tbody></table></div></div>
+
+	<br />
+	
+	<div><div class="tableContainer"><table>
+		<caption>What's been said</caption><tbody id="comments">
+		<tr>
+			<th colspan='2'>Name:</th>
+			<th>Time:</th>
+			<th>Comment:</th>
+			<th>Replies:</th>
+		</tr>
+	</tbody></table></div></div>
+
+	<textarea id="postData">§postData§</textarea>
+	<textarea id="userData">§userData§</textarea>
+
+	<div id="actionLinks">
+		<a id="save">Save File</a>
+		&#8226;
+		<a href="#" id='action postData'>postData.json</a>
+		&#8226;
+		<a href="#" id="action userData">userData.json</a>
+	</div>
+
+	§mapJS§
+
+	§script§
+
+
+</body>
+

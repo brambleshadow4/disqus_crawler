@@ -1,0 +1,33 @@
+
+<style type='text/css' rel='spreadsheet'> 
+	h1{
+		font-size: 20pt; 
+		font-weight: bold; 
+		margin: 10px;
+		display: inline-block;
+	} 
+	#appMenu {
+		background-color: rgba(255,255,255,1); 
+		background-size: initial;
+		z-index: 150;
+		width: 500px;
+		position: fixed;
+		bottom: 0px;
+		left: 0px;
+		border-top: 10px solid black;
+		border-right: 10px solid black;
+		padding: 30px;
+	} 
+	button{
+		border: 1px solid black;
+		border-radius: 3px;
+		padding: 5px;
+	}
+</style> 
+<div>
+	<h1>Disqus Crawler</h1> <span id='commentCount'>0</span> Comments Loaded
+</div>
+
+<button id="bLoad"  disabled >Load Comments</button>
+<button id="bStop" >Stop Loading</button>
+<button id="bAnalyze">Analyze</button>	
