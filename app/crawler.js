@@ -82,29 +82,49 @@ function loadMenu(){
 }
 
 var isLoading = true;
+var images = {};
+images["%%duplicateCount"] = 0;
+images["%%duplicate"] = "";
+
 
 function loadPosts(){
 	//var listCount = document.getElementsByClassName('post-list').length;
 	var postList = document.getElementById('post-list');
 	var posts = postList.getElementsByClassName("post");
 
-	//console.log(document.getElementsByClassName('post-list'));
-
 	var index = 0; 
 	while(posts.length > index)
 	{
-		console.log('trying');
 		var imgURL = "/forums/";
 		try{
 			imgURL = posts[index].getElementsByClassName('avatar')[0].getElementsByTagName('img')[0].src}
 		catch(e){alert("error")};
 
-		posts[index].style.display = "initial";
+		var userName = posts[index].getElementsByClassName("author")[0];
+		if(userName.getElementsByTagName('a').length == 0)
+			userName = userName.innerHTML;
+		else
+			userName = userName.getElementsByTagName('a')[0].innerHTML;
 
+		if(images[imgURL] == undefined)
+		{
+			images[imgURL] = [userName];
+		}
+		else if(images[imgURL].indexOf(userName) == -1)
+		{
+			images[imgURL].push(userName);
+		}
 
-		if(imgURL.indexOf("/forums/") == -1 || posts[index].getElementsByClassName("author")[0].getElementsByTagName('a').length == 0
+		if(images[imgURL].length > images["%%duplicateCount"])
+		{
+			images["%%duplicateCount"] = images[imgURL].length;
+			images["%%duplicate"] = imgURL;
+		}
+
+		if(imgURL != images["%%duplicate"] || posts[index].getElementsByClassName("author")[0].getElementsByTagName('a').length == 0
 			|| (posts[index].hasAttribute('load-next') && posts[index].getAttribute('load-next') == 5)) 
 		{
+			//correct image has loaded
 			var children = posts[index].getElementsByClassName('children')[0].getElementsByClassName('post');
 
 			while(children.length > 0){
@@ -114,18 +134,18 @@ function loadPosts(){
 			}
 
 			CommentBase.push(posts[index]);
-			//console.log(posts[index]);
-			posts[index].style.display="none";
+			posts[index].style.display = "none";
 			posts[index].className = "post-processed";
 			document.getElementById('commentCount').innerHTML++;
 
 		}
-		else{
+		else
+		{
+			//image hasn't had time to load yet
 			if(!posts[index].hasAttribute('load-next') && index < 20)
 				posts[index].setAttribute("load-next","1");
 			else if (index<5)
 				posts[index].setAttribute("load-next", Number(posts[index].getAttribute('load-next'))+1);
-			
 			index++;
 		}
 	}
@@ -174,6 +194,7 @@ function analyze()
 	});
 
 	var userData = [];
+
 	console.log("Gathering User Data")
 	for (var i = 0; i < postData.length; i++) 
 	{
@@ -194,18 +215,35 @@ function analyze()
 
 			userData.push(newUser);
 		}
-		else{
+		else
+		{
 			userData[userIndex].commentCount++;
 
 			if(userData[userIndex].lastPost.getTime() < postData[i].date.getTime()){
 				userData[userIndex].lastPost = postData[i].date;
 				userData[userIndex].lastPostString = postData[i].dateString;
 			}
+
+			if(userData[userIndex].imgURL == images["%%duplicate"])
+			{
+				userData[userIndex].imgURL = postData[i].imgURL;
+			}
 		}
 	}
 
-	console.log("Writing files");
+	//replace postData user iamges with images found in userData
+	for (var i = 0; i < postData.length; i++)
+	{
+		var userIndex = -1;
+		for (var j = 0; j < userData.length && userIndex == -1; j++) {
+			if(postData[i].userName == userData[j].userName)
+				userIndex = j;
+		}
 
+		postData[i].imgURL = userData[userIndex].imgURL;
+	}
+
+	console.log("Writing files");
 
 	if(ResultsHTML == undefined){
 		alert("File not loaded. Please try again");
@@ -213,7 +251,6 @@ function analyze()
 	}
 
 	var code = ResultsHTML;
-
 
 	var getParameters = location.search.substring(1);
 	getParameters = getParameters.split('&');
@@ -255,12 +292,12 @@ function analyze()
 	console.log("Document opened");
 }
 
-function getPostData(comments){
-
+function getPostData(comments)
+{
 	var data = [];
 
-	for (var i = 0; i < comments.length; i++){
-
+	for (var i = 0; i < comments.length; i++)
+	{
 		var postFields = {};
 
 		//postFields.imgURL
