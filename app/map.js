@@ -1,7 +1,6 @@
 var userData = JSON.parse(document.getElementById('userData').value);
 var responseData = JSON.parse(document.getElementById('responseData').value);
 
-
 var drawID = {};
 var radius = userData.length*75/2/Math.PI;
 for (var i = 0; i < userData.length; i++)
@@ -70,7 +69,6 @@ for (var i = 0; i < userData.length; i++)
 }
 
 
-
 //"http://www.w3.org/2000/svg"
 
 var SVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -78,6 +76,8 @@ SVG.style = "position: absolute; top:0px; left:0px; z-index: -1;"
 SVG.setAttribute('height', Math.floor(radius*2+200));
 SVG.setAttribute('width', Math.floor(radius*3+200));
 document.body.appendChild(SVG);
+//document.body.style.height = Math.floor(radius*2+200)+ "px";
+//document.body.style.width = Math.floor(radius*3+200)+ "px";
 
 
 for (var i = 0; i < responseData.length; i++)
@@ -108,8 +108,6 @@ for (var i = 0; i < responseData.length; i++)
 		
 	//responseData[i]
 }
-
-
 
 
 function makeCanvas()
@@ -148,6 +146,9 @@ function makeCanvas()
 		ctx.drawImage(IMGs[0],x,y,IMGs[0].width,IMGs[0].height);
 		IMGs[0].parentNode.removeChild(IMGs[0]);
 	}
+
+	var b = document.getElementsByTagName('button')[0];
+	b.parentNode.removeChild(b);
 }
 
 var text = document.createElement("p");

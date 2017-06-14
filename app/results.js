@@ -1,57 +1,97 @@
 
 function loadUserData()
 {
-
-	var sampleRow = "<tr><td><img src='§userIMG§' alt='avatar'/></td><td>§userName§</td> \
-	<td>§count§</td><td>§profile§</td><td value='§dateTime§'>§date§</td><td>§actionlink§</td></tr>";
+	var table = document.getElementById('users');
+	var sampleRow = "<td><img src='§userIMG§' alt='avatar'/></td><td>§userName§</td> \
+	<td>§count§</td><td>§profile§</td><td value='§dateTime§'>§date§</td><td>§actionlink§</td>";
 
 	var rows = "";
 	for (var i = 0; i < userData.length; i++){
-		var myRow = sampleRow;
-		myRow = myRow.replace('§userIMG§', userData[i].imgURL);
-		myRow = myRow.replace('§userName§', userData[i].userName);
-		myRow = myRow.replace('§count§', userData[i].commentCount);
+		var myRow = document.createElement('tr');
+		myRow.innerHTML = sampleRow;
+		myRow.innerHTML = myRow.innerHTML.replace('§userIMG§', userData[i].imgURL);
+		myRow.innerHTML = myRow.innerHTML.replace('§userName§', userData[i].userName);
+		myRow.innerHTML = myRow.innerHTML.replace('§count§', userData[i].commentCount);
 		if(userData[i].profileLink != '')
-			myRow = myRow.replace('§profile§', "<a target='_BLANK' href='"+ 
+			myRow.innerHTML = myRow.innerHTML.replace('§profile§', "<a target='_BLANK' href='"+ 
 				userData[i].profileLink + "''>Profile</a>");
 		else
-			myRow = myRow.replace('§profile§',"");
-		myRow = myRow.replace('§date§', userData[i].lastPostString);
+			myRow.innerHTML = myRow.innerHTML.replace('§profile§',"");
+		myRow.innerHTML = myRow.innerHTML.replace('§date§', userData[i].lastPostString);
 
 		if(userData[i].lastPost != "")
-			myRow = myRow.replace('§dateTime§', new Date(userData[i].lastPost).getTime());
-		myRow = myRow.replace('§actionlink§', "<span ax='user "+ userData[i].userName +"' onclick='doAction(this)' >Posts</span>");
-		
+			myRow.innerHTML = myRow.innerHTML.replace('§dateTime§', new Date(userData[i].lastPost).getTime());
+		myRow.innerHTML = myRow.innerHTML.replace('§actionlink§', "<span ax='user "+ userData[i].userName +"'>Posts</span>");
+		table.appendChild(myRow);
+		myRow.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 		rows += myRow;
 	}
-
-	document.getElementById('users').innerHTML+= rows;
 }
 
-userData = JSON.parse(fixSafeJSON(document.getElementById('userData').innerHTML));
-if(document.getElementById('users').getElementsByTagName('tr').length == 1)
-	loadUserData();
+var userData;
+var postData;
+var boxes;
+var idMap;
 
+if(document.getElementById('ISFILE'))
+{
+	userData = JSON.parse(fixSafeJSON(document.getElementById('userData').innerHTML));
+	postData = JSON.parse(fixSafeJSON(document.getElementById('postData').innerHTML));
+	loadUserData();
+	boxes = BoxComments(postData)
+	idMap = createCommentThread()
+}
+else
+{
+	chrome.runtime.sendMessage({"task": "session"},function(s)
+	{
+		s = JSON.parse(s);
+
+		userData = s.userData;
+		postData = s.postData;
+		headers = s.headerData.split("\n");
+
+		document.getElementsByTagName('h2')[0].getElementsByTagName('a')[0].href = headers[0];
+		document.getElementsByTagName('h2')[0].getElementsByTagName('a')[0].innerHTML = headers[1];
+
+		document.getElementById('overall').getElementsByTagName('div')[0].innerHTML = postData.length + " comments!";
+		document.getElementById('overall').getElementsByTagName('div')[1].innerHTML = userData.length + " people!";
+
+		var downloadLink = document.getElementById('save');
+
+		var txt = "<!DOCTYPE html><html><head><meta id='ISFILE'>" 
+			+ document.head.innerHTML 
+			+ "</head><body>" 
+			+ document.body.innerHTML.replace('<script src="results.js"><' + "/script>","")
+			+ '<textarea style="display: none" id="userData">'
+			+ makeJSONSafe(JSON.stringify(userData))
+			+ '</textarea><textarea style="display: none" id="postData">'
+			+ makeJSONSafe(JSON.stringify(postData)) + '</textarea>';
+
+		LoadResource("results.js",function(code){
+			txt += "<script>" + code + "<" + "/script>";
+			LoadResource("map.js",function(code)
+			{
+				txt += '<textarea style="display: none" id="map.js">'
+					+ makeJSONSafe(code)
+					+ '</textarea></body></html>';
+				
+				var blob = new Blob([txt], {type: "octet/stream"});
+				var url = window.URL.createObjectURL(blob);
+
+				downloadLink.href = url;
+				downloadLink.download = "AboutYourThread.html";
+			})
+		})
+
+		loadUserData();
+		boxes = BoxComments(postData)
+		idMap = createCommentThread()
+	})
+}
 
 var reversed = false;
 var sortBy = "";
-
-
-var downloadLink = document.getElementById('save');
-var blob = new Blob([
-	"<!DOCTYPE html><html><head>",
-	document.head.innerHTML,
-	"</head><body>",
-	document.body.innerHTML,
-	"</body></html>"], 
-	{type: "octet/stream"});
-
-var url = window.URL.createObjectURL(blob);
-
-downloadLink.href = url;
-downloadLink.download = "AboutYourThread.html";
-
-
 
 function destroyOpenUsers()
 {
@@ -215,43 +255,37 @@ function restyleRows()
 
 	document.getElementById("action userData").onclick = function()
 	{
-		var data = document.getElementById('userData').innerHTML;
+		var data = JSON.stringify(userData);
 
-		var newString = data.replace(/\x24q|\x24d|\x24a|\x24l|\x24g/g, function swap(x)
+		var newString = data.replace(/&|<|>/g, function swap(x)
 		{
-			if(x == '$q') return '"';
-			else if (x =="$a") return "&amp;";
-			else if (x =="$d") return "$";
-			else if (x =="$g") return "&gt;";
-			else if (x =="$l") return "&lt;";
+			if(x == '>') return '&gt;';
+			else if (x =="<") return "&lt;";
+			else if (x =="&") return "&amp;";
 		});
 
 		var x = window.open();
-		x.document.write("<div style='font-family: monospace;'>"+newString+"</div>");
-
+		x.document.write("<div style='font-size: 12pt; font-family: monospace;'>"+newString+"</div>");
 		return false;
 	}
 
-document.getElementById("action postData").onclick = function()
-{
-	var data = document.getElementById('postData').innerHTML;
-
-	var newString = data.replace(/\x24q|\x24d|\x24a|\x24l|\x24g/g, function swap(x)
+	document.getElementById("action postData").onclick = function()
 	{
-		if(x == '$q') return '"';
-		else if (x =="$a") return "&amp;";
-		else if (x =="$d") return "$";
-		else if (x =="$g") return "&gt;";
-		else if (x =="$l") return "&lt;";
-	});
+		var data = JSON.stringify(postData);
 
-	var x = window.open();
-	x.document.write("<div style='font-family: monospace;'>"+newString+"</div>");
+		var newString = data.replace(/&|<|>/g, function swap(x)
+		{
+			if(x == '>') return '&gt;';
+			else if (x =="<") return "&lt;";
+			else if (x =="&") return "&amp;";
+		});
 
-	return false;
-}
+		var x = window.open();
+		x.document.write("<div style='font-size: 12pt; font-family: monospace;'>"+newString+"</div>");
+		return false;
+	}
 
-var postData = JSON.parse(fixSafeJSON(document.getElementById('postData').innerHTML));
+
 
 function BoxComments(comments, includeReplies)
 {
@@ -439,8 +473,6 @@ function BoxComments(comments, includeReplies)
 	return newBoxes.boxes;
 }
 
-var boxes = BoxComments(postData);
-
 function createCommentThread()
 {
 	var idMap = {};
@@ -483,13 +515,16 @@ function createCommentThread()
 
 		if(comment.replies.length > 0)
 			row.innerHTML = row.innerHTML.replace("§replies§",
-				"<span ax='replies " +comment.id+"' onclick='doAction(this)'>Show Replies</span>");
+				//"<span ax='replies " +comment.id+"' onclick='doAction(this)'>Show Replies</span>");
+				"<span ax='replies " +comment.id+"'>Show Replies</span>");
 		else
 			row.innerHTML = row.innerHTML.replace("§replies§","");
 
 		row.style.display = "none";
-
 		document.getElementById('comments').appendChild(row);
+		
+		if(row.getElementsByTagName('span')[0])
+			row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 
 		for (var i = 0; i < comment.replies.length; i++) {
 			createComment(comment.replies[i]);
@@ -503,10 +538,12 @@ function createCommentThread()
 		row.className = "box";
 		
 		row.innerHTML = "<td colspan='5'>" + timeSlotName(boxes[i].minTime, boxes[i].tier)  
-			+'</br><span ax="open '+i+'" onclick="doAction(this)">View Comments</span></td>';
+			//+'</br><span ax="open '+i+'" onclick="doAction(this)">View Comments</span></td>';
+			+'</br><span ax="open '+i+'">View Comments</span></td>';
 
 		row.style.height="inherit";
 		document.getElementById('comments').appendChild(row);
+		row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 
 		for (var j = 0; j < boxes[i].comments.length; j++)
 		{
@@ -518,8 +555,9 @@ function createCommentThread()
 		row.className = "box";
 		row.style.height="inherit";
 		row.style.display= "none";
-		row.innerHTML = '<td colspan="5"><span ax="close '+i+'" onclick="doAction(this)">Hide Comments</span></td>';
+		row.innerHTML = '<td colspan="5"><span ax="close '+i+'">Hide Comments</span></td>';
 		document.getElementById('comments').appendChild(row);
+		row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 	}
 
 	if(boxes.length == 1){
@@ -534,11 +572,6 @@ function createCommentThread()
 	restyleRows();
 	return idMap;
 }
-
-
-var idMap = createCommentThread();
-
-
 
 function doAction(item){
 
@@ -728,10 +761,10 @@ function doAction(item){
 			row.innerHTML = "<td>§time§</td><td colspan='4'>§comment§</td><td>§view§</td>";
 			row.innerHTML = row.innerHTML.replace("§time§",comment.dateString);
 			row.innerHTML = row.innerHTML.replace("§comment§",comment.comment);
-			row.innerHTML = row.innerHTML.replace("§view§", "<span onclick='doAction(this)' ax='jump "+commentID+"'>Context</span>");
-
+			row.innerHTML = row.innerHTML.replace("§view§", "<span ax='jump "+commentID+"'>Context</span>");
 			row.style.display = "none";
 			insertAfter(row, pointer);
+			row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 			pointer = row; 
 		}
 
@@ -741,11 +774,13 @@ function doAction(item){
 			row.id ="box " + i + " " + user;
 			row.className = "box inner5";
 			
+			//row.innerHTML = "<td colspan='6'>" + timeSlotName(postBoxes[i].minTime, postBoxes[i].tier)  
+			//	+'</br><span ax="open '+i+" "+ user+'" onclick="doAction(this)">View Comments</span></td>';
 			row.innerHTML = "<td colspan='6'>" + timeSlotName(postBoxes[i].minTime, postBoxes[i].tier)  
-				+'</br><span ax="open '+i+" "+ user+'" onclick="doAction(this)">View Comments</span></td>';
-
+				+'</br><span ax="open '+i+" "+ user+'">View Comments</span></td>';
 			row.style.height="inherit";
 			insertAfter(row, pointer);
+			row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 			pointer = row; 
 
 			for (var j = 0; j < postBoxes[i].comments.length; j++)
@@ -758,8 +793,11 @@ function doAction(item){
 			row.className = "box inner5";
 			row.style.height="inherit";
 			row.style.display= "none";
-			row.innerHTML = '<td colspan="6"><span ax="close '+i+" "+user+ '" onclick="doAction(this)">Hide Comments</span></td>';
+			//row.innerHTML = '<td colspan="6"><span ax="close '+i+" "+user+ '" onclick="doAction(this)">Hide Comments</span></td>';
+			row.innerHTML = '<td colspan="6"><span ax="close '+i+" "+user+ '">Hide Comments</span></td>';
 			insertAfter(row, pointer);
+
+			row.getElementsByTagName('span')[0].onclick = function(){doAction(this)};
 			pointer = row;
 		}
 
@@ -855,7 +893,7 @@ function doAction(item){
 }
 
 
-function analyzeNetwork()
+function analyzeNetwork(t)
 {
 	var responseMatrix = {};
 	responseMatrix.userList = [];
@@ -915,7 +953,6 @@ function analyzeNetwork()
 		return interactions;
 	}
 
-
 	var Comments = 0;
 	var Replies = 0;
 	for (var i = 0; i < postData.length; i++)
@@ -924,7 +961,9 @@ function analyzeNetwork()
 		{
 			var parent = postData[idMap[postData[i].parent]];
 			if(parent == undefined)
-				console.log(postData[i].parent);
+			{
+				//console.log(postData[i].parent);
+			}	
 			else
 			{
 				responseMatrix.increment(parent.userName,postData[i].userName);
@@ -937,20 +976,86 @@ function analyzeNetwork()
 		}
 	}
 
-	console.log("Comments: " + Comments);
-	console.log("Replies: " + Replies);
+	var edges = responseMatrix.allInteractions();
+	
+	if(t)
+	{
+		edges.sort(function(a,b){ return ((a[2]> b[2])? 1: ((a[2]<b[2])? -1: 0))});
 
+		var disjointSet = {};
+		var MST = [];
+
+		function setName(k)
+		{
+			var j = disjointSet[k].set;
+			if(disjointSet[j].set != j)
+				disjointSet[k].set = setName(j);
+			return disjointSet[k].set;
+		}
+		function merge(a,b){
+			a = setName(a);
+			b = setName(b);
+
+			if(disjointSet[a].rank < disjointSet[b].rank)
+			{
+				disjointSet[a].set = b;
+			}
+			else if (disjointSet[a].rank > disjointSet[b].rank)
+			{
+				disjointSet[b].set = a;
+			}
+			else
+			{
+				disjointSet[a].set = b;
+				disjointSet[b].rank++;
+			}
+			//console.log(a + " + " + b + "->" + disjointSet[a].set)
+		}
+
+		while(edges.length && MST.length < userData.length-1)
+		{
+			var e = edges.pop();
+			//console.log(e);
+			if(disjointSet[e[0]] == undefined)
+				disjointSet[e[0]] = {set: e[0], rank: 0};
+			if(disjointSet[e[1]] == undefined)
+				disjointSet[e[1]] = {set: e[1], rank: 0};
+
+			if(setName(e[0]) != setName(e[1]))
+			{
+				MST.push(e);
+				merge(e[0],e[1]);
+				//console.log(disjointSet);
+			}
+			else
+			{
+				//console.log("ALREADY IN SET");
+			}
+			
+		}
+		edges = MST;
+	}
+
+
+	//var newWindow = window.open("","_blank"/*,"menubar=no",*/);
 	var newWindow = window.open();
 
 	newWindow.document.write('<textarea style="display: none" id="userData">' + JSON.stringify(userData) + '</textarea>');
+
+
 	newWindow.document.write('<textarea style="display: none" id="responseData">' 
-		+ JSON.stringify(responseMatrix.allInteractions()) + '</textarea>');
-	newWindow.document.write("<script>"+document.getElementById('mapJS').value+"</" + "script>");
+		+ JSON.stringify(edges) + '</textarea>');
+
+
+	if(document.getElementById("ISFILE"))
+		newWindow.document.write("<script>" +fixSafeJSON(document.getElementById('map.js').innerHTML)+"<"+"/script>");
+	else
+		newWindow.document.write("<script src='map.js'></" + "script>");
 	
 }
 
-document.getElementById('analyzeNetwork').onclick = analyzeNetwork;
-
+document.getElementById('analyzeNetwork').onclick = function(){analyzeNetwork(false)};
+document.getElementById('analyzeNetwork2').onclick = function(){analyzeNetwork(true)};
 
 function timeSlotName(time, tier)
 {

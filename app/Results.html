@@ -29,6 +29,8 @@
 			background-color: gray;
 			color: black;
 			text-align: center;
+			font-family: serif;
+			font-size: 100%;
 		}
 
 		.tableContainer{
@@ -49,8 +51,6 @@
 		}
 		th {padding: 10px;}
 		th a{color: black;}
-
-
 
 		
 		/*tr:nth-child(odd) {
@@ -103,7 +103,6 @@
 		tr.odd.inner5{background-color: #9d8462} tr.even.inner5{background-color: #7d6a4f}
 
 	</style>
-
 </head>
 <body>
 
@@ -111,13 +110,14 @@
 	<h2><a href='§threadURL§' id='threadURL'>§threadName§</a></h2>
 
 	<div id='overall'>
-		<div>§comments§ comments!</div>
-		<div>§users§ people!</div>
+		<div>Loading Data</div>
+		<div></div>
 		<span ax id='analyzeNetwork'>See visualization</span>
+		<span ax id='analyzeNetwork2'>(MST)</span>
 	</div>
 	
-	<div><div class="tableContainer"><table id="users">
-		<caption>Who's here</caption><tbody>
+	<div><div class="tableContainer"><table >
+		<caption>Who's here</caption><tbody id="users">
 		<tr>
 			<th colspan="2"><span ax='sort' id="sortUser" href="Results.html">User:</span></th>
 			<th><span ax='sort' id="sortComments" href="Results.html">Comments:</span></th>
@@ -139,9 +139,6 @@
 		</tr>
 	</tbody></table></div></div>
 
-	<textarea id="postData">§postData§</textarea>
-	<textarea id="userData">§userData§</textarea>
-
 	<div id="actionLinks">
 		<a id="save">Save File</a>
 		&#8226;
@@ -150,10 +147,7 @@
 		<a href="#" id="action userData">userData.json</a>
 	</div>
 
-	§mapJS§
-
-	§script§
-
+	<script src="results.js"></script>
 
 </body>
 

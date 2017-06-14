@@ -5,15 +5,14 @@
 //export userData as JSON
 //export postData as JSON
 
-
 //my code
 
 
 var title = document.getElementsByTagName("title")[0].innerHTML;
 if(title !="Disqus Comments"){
-	var DISQUSiframe = document.getElementById("dsq-app2");
+	var DISQUSiframe = document.getElementById("dsq-app1");
 
-	if(DISQUSiframe == undefined)
+	if(/*DISQUSiframe == undefined*/ false)
 		alert("No Disqus thread found");
 	else{
 		
@@ -45,12 +44,9 @@ function LoadResource(url,success){
 	xhr.send();
 }
 
-
-LoadResource(chrome.extension.getURL('results.js'),function(text){ResultsJS = text;});
-LoadResource(chrome.extension.getURL('Results.html'),function(text){ResultsHTML = text;});
-LoadResource(chrome.extension.getURL('map.js'),function(text){ mapJS = text;});
 	
-function loadMenu(){
+function loadMenu()
+{
 	if(document.getElementsByClassName('post').length == 0){
 		setTimeout(loadMenu,500);
 
@@ -87,7 +83,8 @@ images["%%duplicateCount"] = 0;
 images["%%duplicate"] = "";
 
 
-function loadPosts(){
+function loadPosts()
+{
 	//var listCount = document.getElementsByClassName('post-list').length;
 	var postList = document.getElementById('post-list');
 	var posts = postList.getElementsByClassName("post");
@@ -245,21 +242,12 @@ function analyze()
 
 	console.log("Writing files");
 
-	if(ResultsHTML == undefined){
-		alert("File not loaded. Please try again");
-		return false;
-	}
-
-	var code = ResultsHTML;
-
 	var getParameters = location.search.substring(1);
 	getParameters = getParameters.split('&');
 	var parameters = {};
 
 	for (var i = 0; i < getParameters.length; i++)
 	{
-		getParameters[i]
-
 		getParameters[i] = getParameters[i].split("=");
 
 		getParameters[i][0] = decodeURIComponent(getParameters[i][0]);
@@ -268,28 +256,15 @@ function analyze()
 		parameters[getParameters[i][0]] = getParameters[i][1];
 	}
 
-	code = code.replace("§threadURL§",parameters['t_u']);
-	code = code.replace("§threadName§",parameters['t_d'])
+	var allData = {};
+	allData.userData = userData;
+	allData.postData = postData;
+	allData.headerData =  parameters['t_u'] + "\n" + parameters['t_d'];
 
-	code = code.replace("§comments§", postData.length);
-	code = code.replace("§users§", userData.length);
-
-	code = code.replace("§postData§", makeJSONSafe(JSON.stringify(postData)));
-	code = code.replace("§userData§", makeJSONSafe(JSON.stringify(userData)));
-
-	console.log("JSON embeded");
-
-	if(ResultsJS == undefined)
-	{
-		alert("File not loaded. Please try again");
-		return false;
-	}
-	code = code.replace("§script§", "<script>" + ResultsJS + "</script>");
-	code = code.replace("§mapJS§", "<textarea id='mapJS' style='display: none'>" + mapJS + "</textarea>");
-
-	var results = window.open();
-	results.document.write(code);
-	console.log("Document opened");
+	chrome.runtime.sendMessage({
+		"task": "open analysis",
+		"data": JSON.stringify(allData)
+	});
 }
 
 function getPostData(comments)

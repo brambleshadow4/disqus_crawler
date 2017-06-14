@@ -7,8 +7,10 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 	//Results.document.write(htmlLOG);
 });
 
-chrome.runtime.onMessage.addListener(function(request,sender,sendResponse){
+var session;
 
+chrome.runtime.onMessage.addListener(function(request,sender,sendResponse){
+	
 	if(request.task == "launch iFrame"){
 
 		chrome.tabs.create({
@@ -20,6 +22,21 @@ chrome.runtime.onMessage.addListener(function(request,sender,sendResponse){
 				"file": "crawler.js"
 			},function(){})
 		});
+	}
+	if(request.task == "open analysis")
+	{
+		session = request.data;
+		chrome.tabs.create({
+			"url": "Results.html",
+			"active": true
+		}, function(tab){
+			chrome.tabs.executeScript({'code': 'alert()'});
+			//alert("script executed");
+		});
+	}
+	if(request.task == "session")
+	{
+		sendResponse(session);
 	}
 
 });
